@@ -45,22 +45,26 @@ export async function getVersions(): Promise<MinecraftVersions>{
     return data;
 }
 
+export interface Method{
+    obfuscated: string;
+    argumentTypes: string[];
+    returnType: string;
+}
+
+export interface Field{
+    obfuscated: string;
+    type: string;
+}
+
 export interface MinecraftMappings{
     [ className: string ]: {
         obfuscated: string,
-        methods: { [name: string]: {
-            obfuscated: string,
-            argumentTypes: string[],
-            returnType: string,
-        }[] },
-        fields: { [name: string]: {
-            obfuscated: string,
-            type: string,
-        } },
+        methods: { [name: string]: Method[] },
+        fields: { [name: string]: Field },
     };
 }
 
-export async function getMappings(version: string, type: "client" | "server" = "server"): Promise<MinecraftMappings>{
+export async function getMappings(version: string, type: "client" | "server" = "server"): Promise<MinecraftMappings | null>{
     const sanitizedVersion = version.replace(".", "_");
     if(store.has(`cache.mappings.${sanitizedVersion}`)){
         return store.get(`cache.mappings.${sanitizedVersion}`) as any;
@@ -69,6 +73,10 @@ export async function getMappings(version: string, type: "client" | "server" = "
     const versions = await getVersions();
     const versionResponse = await fetch(versions.versions[version].url);
     const versionData: any = await versionResponse.json();
+
+    if(versionData.downloads === undefined || versionData.downloads[type + "_mappings"] === undefined){
+        return null;
+    }
 
     const mappingResponse = await(fetch(versionData.downloads[type + "_mappings"].url));
     const mappings = parseMappings(await mappingResponse.text());
@@ -82,6 +90,14 @@ function parseMappings(text: string){
     const rawData = text.split("\n");
 
     const mappings: MinecraftMappings = {};
+
+    function processType(type: string){
+        if(type.startsWith("java.lang.")){
+            return type.substring("java.lang.".length);
+        }else{
+            return type;
+        }
+    }
 
     let currentClass: MinecraftMappings[any];
     for(const line of rawData){
@@ -107,7 +123,7 @@ function parseMappings(text: string){
                 continue;
             }
 
-            const argumentTypes = argumentsText?.split(",");
+            const argumentTypes = argumentsText?.split(",")?.map(type => processType(type));
 
             if(!Object.hasOwn(currentClass!.methods, name)){
                 currentClass!.methods[name] = [];
@@ -115,8 +131,8 @@ function parseMappings(text: string){
 
             currentClass!.methods[name].push({
                 obfuscated,
-                argumentTypes,
-                returnType
+                argumentTypes: argumentTypes ?? [],
+                returnType: processType(returnType)
             });
         }else{
             // field
@@ -125,7 +141,7 @@ function parseMappings(text: string){
 
             currentClass!.fields[name] = {
                 obfuscated,
-                type
+                type: processType(type)
             };
         }
     }

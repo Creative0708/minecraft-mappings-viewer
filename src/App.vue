@@ -45,7 +45,7 @@ function confirmEULA(){
         Cookies.set('acceptedEULA', 'true');
       }
 
-      versionsStore.load();
+      load();
     },
     reject(){
       acceptedEULA.value = false;
@@ -57,16 +57,22 @@ function confirmEULA(){
 }
 
 onMounted(() => {
-  if(acceptedEULA.value === null){
+  if(acceptedEULA.value){
+    load();
+  } else if(acceptedEULA.value === null){
     confirmEULA();
   }
 });
 
+function load(){
+  versionsStore.load();
+}
+
 </script>
 
 <template>
-  <div class="w-screen h-screen bg-ground font-sans text-text flex flex-col">
-    <nav class="bg-overlay m-2 p-3 rounded-md flex flex-row items-center gap-5">
+  <div class="w-screen h-screen bg-ground font-sans text-text flex flex-col p-1">
+    <nav class="bg-overlay m-2 mb-0.5 px-4 py-3 rounded-md flex flex-row items-center gap-5">
       <h1 class="text-2xl"> Minecraft Mappings Viewer </h1>
       <Dropdown v-model="selectedVersion" :options="versionsStore.getVersionIDs()" placeholder="Version" :loading="versionsStore.loading" class="w-32" />
       <div>
@@ -79,8 +85,8 @@ onMounted(() => {
       </div>
     </nav>
 
-    <main class="bg-overlay m-2 p-3 rounded-md flex-grow">
-      <MappingsViewer v-if="acceptedEULA === true" />
+    <main class="bg-overlay m-2 p-3 rounded-md flex-grow overflow-hidden">
+      <MappingsViewer v-if="acceptedEULA === true" :version="selectedVersion" />
       <div v-if="acceptedEULA === false" class="w-full h-full flex items-center justify-center">
         <div class="flex flex-col items-center gap-4">
           <h1>

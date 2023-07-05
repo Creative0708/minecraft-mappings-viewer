@@ -8,7 +8,7 @@ interface VersionsState{
     includeSnapshots: boolean;
 }
 
-export const useVersionsStore = defineStore('mappings', {
+export const useVersionsStore = defineStore('versions', {
     state(){
         return {
             versions: undefined,
@@ -32,13 +32,19 @@ export const useVersionsStore = defineStore('mappings', {
             }
             
             const allVersions = Object.entries(this.versions.versions);
+            let versions;
             if(this.includeSnapshots){
-                return allVersions.map(([id, version]) => id);
+                versions = allVersions.map(([id, version]) => id);
             }else{
-                return allVersions
+                versions = allVersions
                     .filter(([id, version]) => version.type != "snapshot")
                     .map(([id, version]) => id);
             }
+
+            // Versions below 1.14.4 don't have mappings
+            versions.splice(versions.indexOf("1.14.4") + 1);
+
+            return versions;
         }
     }
 });
