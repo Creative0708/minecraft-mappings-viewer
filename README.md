@@ -1,24 +1,3 @@
-# minecraft-mappings-viewer
+# Minecraft Mappings Viewer
 
-## Project setup
-```
-npm install
-```
-
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+A mappings viewer for minecraft. I couldn't find any webapps that show the mappings for the most recent versions, so here you go

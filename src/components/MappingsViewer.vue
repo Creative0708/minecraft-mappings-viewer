@@ -3,6 +3,8 @@ import InputText from 'primevue/inputtext';
 import TreeTable from 'primevue/treetable';
 import Column from 'primevue/column';
 
+import MinecraftIcon from './MinecraftIcon.vue';
+
 import { ref, watch } from 'vue';
 import { TreeNode } from 'primevue/tree';
 
@@ -30,11 +32,11 @@ const mappingsStore = useMappingsStore();
 const mappingsUnavailable = ref(false);
 
 watch(() => props.version, (version) => {
-  if(version){
+  if (version) {
     mappingsStore.loadMappings(version).then((mappings) => {
-      if(mappings === null){
+      if (mappings === null) {
         mappingsUnavailable.value = true;
-      }else{
+      } else {
         mappingsUnavailable.value = false;
         getFormattedResults(search.value);
       }
@@ -45,26 +47,28 @@ watch(() => props.version, (version) => {
 const statusMsg = ref<string>('');
 const formattedResults = ref<TreeNode[] | undefined>();
 
-function getFormattedResults(search: string, limit: number = Infinity){
+function getFormattedResults(search: string, limit: number = Infinity) {
 
   const { numResults, limitReached, results } = mappingsStore.findMappings(search, limit);
 
-  if(limitReached){
-    statusMsg.value = `Limiting results to ${limit}`;
-  }else if(numResults === 0){
+  if (numResults === 0) {
     statusMsg.value = 'No results found';
-  }else{
+    formattedResults.value = undefined;
+    return;
+  } else if (limitReached) {
+    statusMsg.value = `Limiting results to ${limit}`;
+  } else {
     statusMsg.value = `${numResults} results found`;
   }
 
   const formattedData: TreeNode[] = [];
 
-  for(const {
+  for (const {
     className,
     obfuscated,
     methods,
     fields,
-  } of results){
+  } of results) {
     const packageName = className.substring(0, className.lastIndexOf('.'));
 
     const classNode: TreeNode = {
@@ -76,8 +80,8 @@ function getFormattedResults(search: string, limit: number = Infinity){
       children: (fields || methods) ? [] : undefined,
     };
 
-    if(methods){
-      for(const method of methods){
+    if (methods) {
+      for (const method of methods) {
         classNode.children!.push({
           key: `${className}.${method.name}`,
           data: {
@@ -87,8 +91,8 @@ function getFormattedResults(search: string, limit: number = Infinity){
         });
       }
     }
-    if(fields){
-      for(const field of fields){
+    if (fields) {
+      for (const field of fields) {
         classNode.children!.push({
           key: `${className}.${field.name}`,
           data: {
@@ -109,23 +113,33 @@ function getFormattedResults(search: string, limit: number = Infinity){
 
 <template>
   <InputText v-model="search" placeholder="Search" class="w-full mb-2" />
-  <p class="text-sm mt-6 mb-2">{{ statusMsg }}</p>
   <div v-if="version === undefined" class="w-full h-full flex items-center justify-center">
-    <h1>
-      Select a Minecraft Version to view mappings
-    </h1>
+    <p>
+      Select a Minecraft version to view mappings
+    </p>
   </div>
   <div v-else-if="mappingsUnavailable" class="w-full h-full flex items-center justify-center">
-    <h1>
+    <p>
       Mappings aren't available for this version
-    </h1>
+    </p>
   </div>
-  <TreeTable :value="formattedResults" v-else scrollable scrollHeight="flex" :loading="mappingsStore.loading"
-    :paginator="true" :rows="50" :rowsPerPageOptions="[50, 100, 500, 1000]"
-    :pt="{ paginator: { class: 'tt-paginator' } }">
-    <Column field="name" header="Unobfuscated Name" expander></Column>
-    <Column field="obfuscated" header="Mapping"></Column>
-  </TreeTable>
+  <div v-else class="w-full h-full relative">
+    <p class="text-sm mt-6 mb-2">{{ statusMsg }}</p>
+    <div class="w-full h-full absolute">
+      <TreeTable :value="formattedResults" scrollable scrollHeight="flex" :loading="mappingsStore.loading"
+        :paginator="true" :rows="50" :rowsPerPageOptions="[50, 100, 500, 1000]"
+        :pt="{ paginator: { class: 'tt-paginator' } }">
+        <Column field="name" header="Unobfuscated Name" expander></Column>
+        <Column field="obfuscated" header="Mapping"></Column>
+      </TreeTable>
+    </div>
+    <div v-if="search.length > 0 && formattedResults === undefined" class="w-full h-full flex items-center justify-center absolute">
+      <div class="flex flex-col items-center opacity-20">
+        <MinecraftIcon pathClasses="fill-primary opacity-70" />
+        <p class="text-primary"> No results </p>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style>
