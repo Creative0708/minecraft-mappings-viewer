@@ -81,7 +81,7 @@ function load(){
       </div>
 
       <div class="ml-auto align-middle">
-        Made with <i class="pi pi-heart-fill text-red-400"></i> from <a href="https://github.com/Creative0708/" class="underline text-text">Colin Cai</a>
+        Made with <i class="pi pi-heart-fill text-red-400"></i> by <a href="https://github.com/Creative0708/" class="underline text-text">Colin Cai</a>
       </div>
     </nav>
 
